@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Whack-a-Mouse — Cute Claymorphism</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800;900&display=swap');
+
+:root{
+  --bg:#e9eef7;
+  --surface:#edf3fa;
+  --text:#29334a;
+  --muted:#77849b;
+  --pink:#ff76a8;
+  --pink2:#ff4f8d;
+  --blue:#6684ff;
+  --purple:#9b7cff;
+  --yellow:#ffc857;
+  --green:#45c98a;
+  --red:#f26676;
+  --shadow:12px 12px 26px rgba(107,124,151,.22),-10px -10px 23px rgba(255,255,255,.96);
+  --inner:inset 6px 6px 13px rgba(107,124,151,.17),inset -6px -6px 13px rgba(255,255,255,.96);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; padding:18px;
+  font-family:"Be Vietnam Pro",sans-serif;color:var(--text);
+  background:
+    radial-gradient(circle at 8% 7%,#fff 0 7%,transparent 25%),
+    radial-gradient(circle at 92% 88%,#dce5ff 0 7%,transparent 28%),var(--bg);
+  overflow-x:hidden;
+}
+button{font:inherit}
+.app{width:min(1080px,100%);margin:auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:13px}
+.logo{
+  width:58px;height:58px;border-radius:20px;
+  display:grid;place-items:center;font-size:29px;
+  background:linear-gradient(145deg,#ff91bb,#f65a97);
+  box-shadow:var(--shadow);color:white;
+}
+h1{margin:0;font-size:25px;font-weight:900;letter-spacing:-1px}
+.subtitle{color:var(--muted);font-size:11px;margin-top:3px}
+.actions{display:flex;gap:9px}
+.btn{
+  min-height:44px;border:0;border-radius:16px;padding:10px 15px;
+  cursor:pointer;color:var(--text);background:var(--surface);
+  box-shadow:8px 8px 17px rgba(107,124,151,.18),-6px -6px 14px #fff;
+  font-size:12px;font-weight:800;transition:.15s;
+}
+.btn:active{box-shadow:var(--inner);transform:translateY(2px)}
+.btn.primary{color:white;background:linear-gradient(145deg,#ff80af,#f65391)}
+
+.hero{
+  position:relative;overflow:hidden;padding:25px 28px;border-radius:30px;
+  background:linear-gradient(145deg,#f1f6fc,#e0e8f4);
+  box-shadow:var(--shadow);margin-bottom:18px;
+}
+.hero h2{margin:0;font-size:clamp(25px,4vw,39px);line-height:1.08;letter-spacing:-1.4px}
+.hero h2 span{color:var(--pink2)}
+.hero p{margin:9px 0 0;color:var(--muted);font-size:12px;line-height:1.65;max-width:720px}
+.bubble{position:absolute;border-radius:50%;pointer-events:none}
+.b1{width:115px;height:115px;right:30px;top:-48px;background:#ffd7e6}
+.b2{width:55px;height:55px;right:145px;bottom:-24px;background:#dce5ff}
+.b3{width:25px;height:25px;right:60px;bottom:18px;background:#ffe2a7}
+
+.game-layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px}
+.panel{
+  background:linear-gradient(145deg,#f0f5fb,#e1e9f4);
+  border-radius:28px;box-shadow:var(--shadow);padding:17px;
+}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:14px}
+.stat{border-radius:17px;padding:9px 12px;background:#e8eff8;box-shadow:var(--inner)}
+.stat small{display:block;font-size:8px;color:var(--muted);font-weight:800}
+.stat strong{font-size:20px;font-weight:900}
+#time{color:var(--pink2)}
+
+.game-area{
+  position:relative;border-radius:25px;padding:13px;
+  background:#dbe4ef;box-shadow:var(--inner);
+}
+.holes{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  gap:12px;aspect-ratio:1;
+}
+.hole{
+  position:relative;min-width:0;overflow:hidden;border:0;
+  border-radius:23px;cursor:pointer;
+  background:linear-gradient(145deg,#cbd5e2,#dce5ef);
+  box-shadow:var(--inner);
+  touch-action:manipulation;
+}
+.hole:after{
+  content:"";position:absolute;left:13%;right:13%;bottom:12%;
+  height:28%;border-radius:50%;
+  background:#aebaca;box-shadow:inset 0 7px 12px rgba(74,88,111,.24);
+  pointer-events:none;
+}
+.mouse{
+  position:absolute;z-index:3;left:50%;bottom:-14%;
+  width:63%;aspect-ratio:1;transform:translateX(-50%) scale(.72);
+  transition:bottom .15s cubic-bezier(.2,.85,.2,1),transform .15s;
+  pointer-events:none;
+}
+.hole.active .mouse{bottom:15%;transform:translateX(-50%) scale(1)}
+.mouse-face{
+  position:absolute;inset:0;border-radius:48% 48% 44% 44%;
+  background:linear-gradient(145deg,#c99172,#a96d53);
+  box-shadow:inset 7px 7px 10px rgba(255,255,255,.25),inset -8px -9px 12px rgba(83,49,39,.2),7px 8px 12px rgba(83,76,91,.18);
+}
+.ear{
+  position:absolute;width:37%;height:37%;top:-10%;
+  border-radius:50%;background:#c99172;z-index:-1;
+  box-shadow:inset 4px 4px 7px rgba(255,255,255,.22);
+}
+.ear:after{content:"";position:absolute;inset:22%;border-radius:50%;background:#f7a0b6}
+.ear.l{left:0}.ear.r{right:0}
+.eye{
+  position:absolute;top:34%;width:13%;height:17%;border-radius:50%;background:#2c3040;
+  box-shadow:2px 2px 0 rgba(255,255,255,.22);
+}
+.eye.l{left:27%}.eye.r{right:27%}
+.eye:after{content:"";position:absolute;width:35%;height:35%;left:18%;top:12%;background:white;border-radius:50%}
+.nose{position:absolute;left:50%;top:54%;transform:translateX(-50%);width:18%;height:13%;border-radius:50%;background:#ef8b9e}
+.mouth{position:absolute;left:50%;top:66%;transform:translateX(-50%);width:22%;height:13%;border-bottom:3px solid #553b3d;border-radius:0 0 50% 50%}
+.whisker{position:absolute;width:30%;height:2px;background:#725650;top:64%;opacity:.6}.w1{left:1%;transform:rotate(-8deg)}.w2{right:1%;transform:rotate(8deg)}
+.hit{
+  position:absolute;z-index:5;inset:0;display:grid;place-items:center;
+  font-size:clamp(25px,5vw,45px);font-weight:900;color:white;
+  text-shadow:0 3px 0 rgba(0,0,0,.12);pointer-events:none;opacity:0;transform:scale(.5) rotate(-10deg)
+}
+.hit.show{animation:hit .48s ease-out}
+@keyframes hit{0%{opacity:1;transform:scale(.5) rotate(-10deg)}45%{opacity:1;transform:scale(1.3) rotate(8deg)}100%{opacity:0;transform:scale(1.7) rotate(-4deg)}}
+.hole.hitflash{animation:flash .25s ease}
+@keyframes flash{50%{transform:scale(.94);box-shadow:inset 0 0 0 4px #ffd0df,var(--inner)}}
+
+.status{text-align:center;color:var(--muted);font-size:11px;font-weight:700;padding:9px 3px 1px;min-height:28px}
+.side h3{margin:2px 0 4px;font-size:18px}.side p{margin:0 0 15px;color:var(--muted);font-size:11px;line-height:1.65}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+.mode button{border:0;border-radius:14px;padding:10px 7px;background:#e7eef8;box-shadow:var(--inner);font-size:10px;font-weight:800;cursor:pointer;color:var(--muted)}
+.mode button.selected{background:#ffd9e7;color:#d94279;box-shadow:var(--inner),0 0 0 2px #ff9bc0}
+.instructions{padding:14px;border-radius:18px;box-shadow:var(--inner);font-size:11px;color:var(--muted);line-height:1.75}
+.instructions b{color:var(--text)}
+.badge{display:inline-block;padding:5px 9px;border-radius:99px;background:#dff6eb;color:#2d9b68;font-size:9px;font-weight:900;margin-bottom:8px}
+.overlay{
+  position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+  border-radius:25px;background:rgba(226,234,245,.86);backdrop-filter:blur(5px)
+}
+.overlay.show{display:flex}
+.modal{width:min(88%,330px);padding:25px;text-align:center;border-radius:25px;background:var(--surface);box-shadow:var(--shadow)}
+.modal .emoji{font-size:43px}.modal h2{margin:6px 0;font-size:25px}.modal p{color:var(--muted);font-size:11px}.final{font-size:39px;font-weight:900;color:var(--pink2);margin:5px}
+.particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:10}
+.particle{position:absolute;width:8px;height:8px;border-radius:3px;animation:particle .65s ease-out forwards}
+@keyframes particle{0%{opacity:1;transform:translate(0,0) rotate(0) scale(1)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(180deg) scale(.3)}}
+.shake{animation:shake .24s ease}
+@keyframes shake{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.footer{text-align:center;color:#98a5b8;font-size:10px;margin-top:14px}
+
+@media(max-width:850px){.game-layout{grid-template-columns:1fr}.side{display:grid;grid-template-columns:1fr 1fr;gap:15px}.side>*:first-child{grid-column:1/-1}}
+@media(max-width:600px){
+ body{padding:10px}.top{align-items:flex-start}.actions .btn:first-child{display:none}
+ h1{font-size:20px}.logo{width:50px;height:50px}.hero{padding:20px}.game-layout{gap:12px}.panel{padding:12px;border-radius:23px}
+ .hud{gap:6px}.stat{padding:8px}.stat strong{font-size:16px}.holes{gap:7px}.game-area{padding:8px;border-radius:20px}.hole{border-radius:16px}
+ .side{display:block}.side h3{margin-top:3px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+
+<body>
+<div class="app">
+<header class="top">
+  <div class="brand">
+    <div class="logo">🐭</div>
+    <div><h1>Đập Chuột <span style="color:#ff5d98">Cute!</span></h1><div class="subtitle">Whack-a-Mouse • Claymorphism Edition</div></div>
+  </div>
+  <div class="actions">
+    <button class="btn" id="soundBtn" type="button">🔊 Âm thanh</button>
+    <button class="btn primary" id="restart" type="button">↻ Chơi lại</button>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="bubble b1"></div><div class="bubble b2"></div><div class="bubble b3"></div>
+  <h2>Bắt lấy những chú chuột <span>tinh nghịch!</span> 🐭</h2>
+  <p>Chuột sẽ ló đầu lên ở những chiếc hang khác nhau. Hãy đập thật nhanh để ghi điểm, tạo combo và trở thành cao thủ!</p>
+</section>
+
+<div class="game-layout">
+<section class="panel">
+  <div class="hud">
+    <div class="stat"><small>ĐIỂM</small><strong id="score">0</strong></div>
+    <div class="stat"><small>KỶ LỤC</small><strong id="best">0</strong></div>
+    <div class="stat"><small>COMBO</small><strong id="combo">0</strong></div>
+    <div class="stat"><small>THỜI GIAN</small><strong id="time">30s</strong></div>
+  </div>
+
+  <div class="game-area" id="gameArea">
+    <div class="holes" id="holes"></div>
+    <div class="particles" id="particles"></div>
+    <div class="overlay" id="overlay">
+      <div class="modal">
+        <div class="emoji">🏆</div>
+        <h2>Hết giờ!</h2>
+        <p>Chuột đã trốn hết rồi!</p>
+        <div class="final" id="finalScore">0</div>
+        <p>điểm số</p>
+        <button class="btn primary" id="restart2" type="button">🐭 Chơi lại</button>
+      </div>
+    </div>
+  </div>
+  <div class="status" id="status" aria-live="polite">Bấm “Chơi lại” để bắt đầu một lượt mới!</div>
+</section>
+
+<aside class="panel side">
+  <div>
+    <span class="badge">GAME MODE</span>
+    <h3>Chọn độ khó</h3>
+    <p>Chuột càng nhanh thì điểm càng cao. Đừng để chúng trốn mất nhé!</p>
+    <div class="mode">
+      <button type="button" data-mode="easy">🌱 Dễ<br><small>40 giây</small></button>
+      <button type="button" data-mode="normal" class="selected">⭐ Thường<br><small>30 giây</small></button>
+      <button type="button" data-mode="hard">🔥 Khó<br><small>20 giây</small></button>
+      <button type="button" data-mode="crazy">💥 Siêu khó<br><small>15 giây</small></button>
+    </div>
+  </div>
+  <div class="instructions">
+    <b>🎯 Cách chơi</b><br>
+    • Nhấn <b>Chơi lại</b> để bắt đầu.<br>
+    • Chạm/click vào chuột khi nó ló lên.<br>
+    • Đập liên tiếp để tăng <b>combo</b>.<br>
+    • Bắt hụt sẽ làm combo về 0.<br>
+    • Âm thanh được tạo trực tiếp trong trình duyệt.
+  </div>
+</aside>
+</div>
+
+<div class="footer">Whack-a-Mouse Cute • Claymorphism UI • 100% HTML/CSS/JS</div>
+</div>
+
+<script>
+(function(){
+"use strict";
+const holesEl=document.getElementById("holes");
+const scoreEl=document.getElementById("score"),bestEl=document.getElementById("best");
+const comboEl=document.getElementById("combo"),timeEl=document.getElementById("time");
+const statusEl=document.getElementById("status"),overlay=document.getElementById("overlay");
+const finalScore=document.getElementById("finalScore"),gameArea=document.getElementById("gameArea");
+const particlesEl=document.getElementById("particles"),soundBtn=document.getElementById("soundBtn");
+
+let score=0,best=0,combo=0,timeLeft=30,playing=false,sound=true;
+let timer=null,mouseTimer=null,current=-1,last=-1,mode="normal";
+const settings={
+ easy:{time:40,min:720,max:1100},
+ normal:{time:30,min:520,max:900},
+ hard:{time:20,min:350,max:650},
+ crazy:{time:15,min:230,max:500}
+};
+
+const AudioCtx=window.AudioContext||window.webkitAudioContext;
+let audio=null;
+function beep(freq,duration=.07,type="sine",volume=.045){
+ if(!sound||!AudioCtx)return;
+ try{
+  if(!audio)audio=new AudioCtx();
+  if(audio.state==="suspended")audio.resume();
+  const o=audio.createOscillator(),g=audio.createGain();
+  o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(volume,audio.currentTime);
+  g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);
+  o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+duration);
+ }catch(e){}
+}
+function hitSound(){beep(620,.055,"sine",.055);setTimeout(()=>beep(850,.08,"triangle",.045),35)}
+function missSound(){beep(170,.09,"sawtooth",.025)}
+function startSound(){beep(430,.07);setTimeout(()=>beep(620,.09),75);setTimeout(()=>beep(820,.12),150)}
+function endSound(){beep(420,.1,"triangle");setTimeout(()=>beep(300,.12,"triangle"),100);setTimeout(()=>beep(210,.18,"sine"),210)}
+
+function build(){
+ holesEl.innerHTML="";
+ for(let i=0;i<16;i++){
+  const b=document.createElement("button");b.type="button";b.className="hole";b.dataset.i=i;
+  b.innerHTML=`<div class="mouse">
+    <div class="ear l"></div><div class="ear r"></div>
+    <div class="mouse-face">
+      <div class="eye l"></div><div class="eye r"></div>
+      <div class="nose"></div><div class="mouth"></div>
+      <div class="whisker w1"></div><div class="whisker w2"></div>
+    </div></div><div class="hit">+1</div>`;
+  b.addEventListener("pointerdown",e=>{e.preventDefault();whack(i)});
+  holesEl.appendChild(b);
+ }
+}
+function setMode(m){
+ mode=m;
+ document.querySelectorAll(".mode button").forEach(b=>b.classList.toggle("selected",b.dataset.mode===m));
+ if(!playing){timeLeft=settings[m].time;timeEl.textContent=timeLeft+"s"}
+ statusEl.textContent="Độ khó đã chọn. Bấm “Chơi lại” để bắt đầu.";
+}
+function chooseHole(){
+ let n;
+ do{n=Math.floor(Math.random()*16)}while(n===last&&Math.random()<.72);
+ last=n;return n;
+}
+function scheduleMouse(){
+ if(!playing)return;
+ clearTimeout(mouseTimer);
+ const s=settings[mode],delay=s.min+Math.random()*(s.max-s.min);
+ mouseTimer=setTimeout(showMouse,delay);
+}
+function showMouse(){
+ if(!playing)return;
+ if(current>=0)hideMouse(current);
+ current=chooseHole();
+ const h=holesEl.children[current];h.classList.add("active");
+ const duration=Math.max(260,settings[mode].min*.95+Math.random()*240);
+ mouseTimer=setTimeout(()=>{if(current===parseInt(h.dataset.i)){hideMouse(current);combo=0;update();missSound()}scheduleMouse()},duration);
+}
+function hideMouse(i){
+ if(i<0)return;
+ holesEl.children[i]?.classList.remove("active");
+ current=-1;
+}
+function whack(i){
+ if(!playing)return;
+ if(i!==current){
+  combo=0;update();missSound();
+  gameArea.classList.remove("shake");void gameArea.offsetWidth;gameArea.classList.add("shake");
+  return;
+ }
+ const h=holesEl.children[i],hit=h.querySelector(".hit");
+ score+=1+Math.min(combo,10);
+ combo++;
+ if(combo%5===0)score+=5;
+ hit.textContent=combo>=5?"+"+(1+Math.min(combo-1,10))+" 🔥":"+1";
+ hit.classList.remove("show");void hit.offsetWidth;hit.classList.add("show");
+ h.classList.remove("hitflash");void h.offsetWidth;h.classList.add("hitflash");
+ spawnParticles(h);
+ hitSound();
+ if(score>best)best=score;
+ hideMouse(i);update();
+ statusEl.textContent=combo>=5?`🔥 Combo ×${combo}! Đập quá nhanh!`:`✨ Tuyệt vời! +${1+Math.min(combo-1,10)} điểm`;
+ scheduleMouse();
+}
+function spawnParticles(target){
+ const rect=target.getBoundingClientRect(),area=gameArea.getBoundingClientRect();
+ const cx=rect.left+rect.width/2-area.left,cy=rect.top+rect.height/2-area.top;
+ const colors=["#ff76a8","#6684ff","#ffc857","#45c98a","#9b7cff"];
+ for(let i=0;i<10;i++){
+  const p=document.createElement("i");p.className="particle";
+  p.style.left=cx+"px";p.style.top=cy+"px";p.style.background=colors[i%colors.length];
+  p.style.setProperty("--x",(Math.random()*110-55)+"px");p.style.setProperty("--y",(Math.random()*100-70)+"px");
+  particlesEl.appendChild(p);setTimeout(()=>p.remove(),700);
+ }
+}
+function update(){
+ scoreEl.textContent=score;bestEl.textContent=best;comboEl.textContent=combo;timeEl.textContent=timeLeft+"s";
+}
+function start(){
+ clearInterval(timer);clearTimeout(mouseTimer);
+ score=0;combo=0;timeLeft=settings[mode].time;playing=true;current=-1;last=-1;
+ overlay.classList.remove("show");build();update();startSound();
+ statusEl.textContent="Bắt đầu! Tóm lấy chú chuột! 🐭";
+ timer=setInterval(()=>{
+  timeLeft--;update();
+  if(timeLeft<=0)end();
+ },1000);
+ setTimeout(showMouse,350);
+}
+function end(){
+ if(!playing)return;
+ playing=false;clearInterval(timer);clearTimeout(mouseTimer);hideMouse(current);
+ finalScore.textContent=score;overlay.classList.add("show");statusEl.textContent="Hết giờ! Xem lại thành tích của bạn.";
+ endSound();
+}
+document.getElementById("restart").addEventListener("click",start);
+document.getElementById("restart2").addEventListener("click",start);
+soundBtn.addEventListener("click",()=>{
+ sound=!sound;soundBtn.textContent=sound?"🔊 Âm thanh":"🔇 Tắt âm";
+ if(sound)beep(720,.08);
+});
+document.querySelectorAll(".mode button").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));
+build();setMode("normal");update();
+})();
+</script>
+</body>
+</html>
